@@ -1,48 +1,48 @@
-Anti-Gravity Uncensored
+# Anti-Gravity Uncensored
 
-Resumen Técnico y Documento de Referencia Rápida
+Resumen técnico y documento de referencia rápida
 Versión 1.1.1
 
 Propósito central:
 "Sin censura en el modelo, estricto control en el sistema operativo."
 
-Este proyecto combina un modelo de lenguaje local sin alineación ni filtros morales (dolphin-llama3.1:8b vía Ollama) con un entorno de ejecución seguro respaldado a nivel de kernel mediante bubblewrap.
+Este proyecto combina un modelo de lenguaje local sin alineación ni filtros morales (`dolphin-llama3.1:8b` vía Ollama) con un entorno de ejecución seguro respaldado a nivel de kernel mediante `bubblewrap`.
 
-Problema que aborda:
+Problema que resuelve:
 - Elimina restricciones de alineación y advertencias morales en consultas técnicas.
-- Reduce el riesgo de ejecución destructiva al aislar red, $HOME y directorios fuera de /workspace.
+- Mitiga riesgos de ejecución al aislar red, `$HOME`, sistema de archivos y directorio de trabajo.
 
-Estructura del script de despliegue:
-- anti-gravity.sh: script de instalación, comprobación de dependencias y validación de bwrap.
-- agent.py: agente interactivo CLI en Python con cliente HTTP de Ollama, modos sandbox/confirm/direct, historial y auditoría JSONL.
-- config.yaml: parámetros del modelo, timeouts y reglas heurísticas de seguridad.
-- test_sandbox.sh: validación del aislamiento real de red, sistema de archivos y espacio de trabajo.
-- README.md: documentación técnica, modos operativos, uso y limitaciones.
+Estructura del script de despliegue (`Anti_Gravity_Proyecto_Completo.txt`):
+- `anti-gravity.sh`: instalación, verificación de dependencias y validación de `bwrap`.
+- `agent.py`: agente interactivo CLI en Python con cliente HTTP de Ollama, modos `sandbox`, `confirm` y `direct`, historial y auditoría JSONL.
+- `config.yaml`: parámetros editables del LLM, timeout y reglas heurísticas de seguridad.
+- `test_sandbox.sh`: suite de pruebas para validar aislamientos reales.
+- `README.md`: documentación técnica, modos, uso y limitaciones.
 
 Defensa en profundidad:
 - Capa UX: heurísticas para detectar comandos potencialmente destructivos.
 - Capa política: modos de ejecución dinámicos.
-- Capa kernel: namespaces de Linux mediante bubblewrap.
-- Capa de auditoría: registro inmutable y permisos restringidos.
+- Capa kernel: namespaces de Linux mediante `bubblewrap`.
+- Capa de auditoría: registro de eventos con permisos restringidos.
 
 Arquitectura funcional:
-1. El agente recibe una solicitud o un comando.
-2. Se analiza el contenido con expresiones regulares para bloquear actividades sospechosas.
-3. Si el modo es sandbox, se ejecuta dentro de namespace aislado.
-4. La ejecución y la salida se registran en logs JSONL.
-5. El modelo responde según el contexto del historial.
+1. El agente recibe una solicitud o comando.
+2. Se analiza el contenido para detectar patrones peligrosos.
+3. Si el modo es `sandbox`, la orden se ejecuta dentro de un namespace aislado.
+4. La salida y la ejecución se registran en logs JSONL.
+5. El modelo responde con el contexto actualizado del historial.
 
-Modo sandbox:
+Modo `sandbox`:
 - Desactiva la red compartida del entorno de ejecución.
 - Monta el sistema de archivos de forma restringida.
-- Fija el directorio de trabajo en /workspace.
+- Fija el directorio de trabajo en `/workspace`.
 - Rechaza patrones destructivos y comandos de alto riesgo.
 
-Modo confirm:
-- Solicita autorización explícita antes de ejecutar un comando.
+Modo `confirm`:
+- Solicita autorización explícita antes de ejecutar cada comando.
 
-Modo direct:
-- Ejecuta el comando sin aislamiento adicional.
+Modo `direct`:
+- Ejecuta sin aislamiento adicional.
 
 Uso recomendado:
 - Entorno local con soporte de namespaces.
@@ -52,8 +52,8 @@ Uso recomendado:
 Limitaciones:
 - La seguridad depende de la configuración y el soporte del host.
 - Los patrones de detección pueden no cubrir todas las ejecuciones maliciosas.
-- La operación correcta requiere permisos suficientes para namespaces.
-- No sustituye un diseño de seguridad defensiva completo.
+- La operación correcta requiere permisos para namespaces.
+- No sustituye un diseño de seguridad completo.
 
 Conclusión:
-Este conjunto ofrece una referencia técnica para operar un LLM local sin filtrado moral, reforzado por restricciones de ejecución a nivel del kernel. Su valor principal reside en la combinación de libertad funcional del modelo y control estricto del entorno operativo.
+Este conjunto ofrece una referencia técnica para operar un LLM local sin filtros morales, reforzado por restricciones de ejecución a nivel del kernel. Su valor principal reside en la combinación de libertad funcional del modelo y control estricto del entorno operativo.

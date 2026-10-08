@@ -2,85 +2,74 @@
 
 ## Visión general
 
-Anti-Gravity Uncensored es un proyecto de referencia que combina un modelo local de lenguaje con un entorno de ejecución fuertemente aislado a nivel de kernel. La propuesta central es simple: permitir un modelo con menos restricciones de alineación en la capa de conversación, mientras se exige un control estricto en la capa operativa para minimizar riesgos de ejecución.
+Anti-Gravity Uncensored es un prototipo técnico de referencia que combina un modelo local de lenguaje con un entorno de ejecución aislado a nivel de kernel. La idea principal es permitir que el modelo responda con menos restricciones de alineación en consultas técnicas, mientras se aplica un control estricto en la capa de ejecución para mitigar riesgos sobre el sistema operativo host.
 
-El proyecto está pensado como prototipo técnico y de validación para entornos Linux, utilizando Ollama para servir el modelo local y bubblewrap (bwrap) para aplicar aislamiento de namespaces, red, sistema de archivos y directorio de trabajo.
+El proyecto está pensado para entornos Linux y utiliza Ollama como backend del modelo y `bubblewrap` para aplicar aislamiento de namespaces, red y espacio de trabajo.
 
 ## Propósito
 
-- Permitir un agente LLM técnicamente más directo y menos sesgado por filtros morales en consultas de tipo técnico.
-- Mantener un control rígido sobre el entorno donde se ejecutan comandos.
-- Reducir el riesgo de que herramientas o scripts generados por la IA afecten sistemas críticos del host.
-- Registrar eventos de ejecución para análisis, auditoría y diagnóstico.
+- Permitir un agente LLM más directo y menos condicionado por filtros morales en consultas técnicas.
+- Reduzir el riesgo de ejecución destructiva mediante entorno sandbox.
+- Registrar eventos para auditoría y análisis forense.
+- Mantener la lógica de IA separada del sistema operativo real.
 
 ## Principios de diseño
 
-### 1. Separación entre modelo y sistema operativo
+### 1. Modelo y sistema operativo separados
 
-El modelo actúa como capa de razonamiento y generación de contenido, pero la ejecución real de comandos se controla fuera del propio modelo.
+La capa del modelo genera texto y recomendaciones, pero la ejecución real de comandos está controlada por un entorno restringido.
 
 ### 2. Defensa en profundidad
 
-Se implementan varias capas:
+Incluye varias capas:
 
-- UX / heurísticas: detección de patrones potencialmente peligrosos antes de ejecutar comandos.
-- Política: modos de ejecución (`sandbox`, `confirm`, `direct`).
-- Kernel: namespaces de Linux y aislamiento con `bubblewrap`.
-- Auditoría: logs JSONL con eventos registrados en disco.
+- heurísticas de seguridad para bloquear patrones peligrosos,
+- modos de ejecución según el nivel de riesgo,
+- aislamiento a nivel de kernel con `bwrap`,
+- auditoría en JSONL para trazabilidad.
 
-### 3. Aislamiento de trabajo
+### 3. Aislamiento de espacio de trabajo
 
-El entorno se restringe a un directorio de trabajo específico (`/workspace`) y se evita el acceso no autorizado a recursos sensibles del sistema host.
+El agente trabaja dentro de un directorio acotado, por defecto `/workspace`, para evitar accesos no autorizados a archivos del host.
 
 ## Estructura del repositorio
 
 - `anti-gravity.sh`: script de instalación y validación del entorno.
 - `agent.py`: agente interactivo CLI en Python.
-- `config.yaml`: configuración del modelo, timeouts y detección de patrones peligrosos.
-- `test_sandbox.sh`: pruebas de validación del sandbox.
-- `README.md`: documentación técnica y guía de uso.
-- `Anti_Gravity_Proyecto_Completo.txt`: síntesis del proyecto en formato de entrega.
+- `config.yaml`: configuración del modelo, timeout y patrones de seguridad.
+- `test_sandbox.sh`: suite de prueba de aislamiento.
+- `README.md`: guía técnica y de uso.
+- `Anti_Gravity_Proyecto_Completo.txt`: documento de referencia del proyecto.
 
 ## Requisitos
 
-- Sistema operativo Linux con soporte de namespaces.
-- Python 3.9 o superior.
-- `bubblewrap` (`bwrap`) instalado.
-- Ollama instalado y funcionando en localhost.
-- Modelo local disponible, por ejemplo: `dolphin-llama3.1:8b`.
-- Paquete `python3-yaml`.
+- Linux con soporte de namespaces.
+- Python 3.9+
+- `bubblewrap` instalado (`bwrap`)
+- Ollama instalado y funcionando en localhost
+- Modelo disponible, por ejemplo: `dolphin-llama3.1:8b`
+- Paquete `python3-yaml`
 
-## Instalación
-
-Ejecuta lo siguiente desde la raíz del repositorio:
+## Instalación rápida
 
 ```bash
 sudo ./anti-gravity.sh install
 ```
 
-Este comando valida dependencias, prepara directorios y comprueba que `bwrap` y Ollama estén disponibles.
-
-## Verificación y pruebas
+También puedes comprobar el estado del entorno:
 
 ```bash
 sudo ./anti-gravity.sh check
 sudo ./anti-gravity.sh test
 ```
 
-La validación comprueba:
-
-- presencia de dependencias,
-- disponibilidad de `bwrap`,
-- acceso a Ollama,
-- ejecución de una prueba mínima dentro del sandbox.
-
-## Ejecución del agente
+## Ejecutar el agente
 
 ```bash
 ./anti-gravity.sh run
 ```
 
-También puedes iniciar el agente directamente:
+O directamente:
 
 ```bash
 python3 agent.py --mode sandbox
@@ -92,26 +81,19 @@ python3 agent.py --mode direct
 
 ### `sandbox`
 
-Ejecuta comandos bajo un entorno aislado mediante `bwrap`.
-
-- red no compartida,
-- directorio de trabajo restringido,
-- montaje de recursos mínimos,
-- intento de prevenir impacto en el host.
+Ejecución bajo aislamiento de kernel. Se habilita `bwrap` con red no compartida y un directorio de trabajo acotado.
 
 ### `confirm`
 
-Solicita confirmación explícita antes de ejecutar cada comando.
+Antes de ejecutar un comando, el sistema solicita confirmación explícita.
 
 ### `direct`
 
-Ejecuta el comando sin aislamiento adicional.
+Ejecución sin aislamiento adicional. Solo recomendable en entornos muy controlados.
 
-Este modo es útil solo en entornos altamente controlados y con tiempo de revisión manual.
+## Uso desde la CLI
 
-## Ejecución de comandos desde la CLI
-
-Dentro del agente, puedes invocar comandos con el prefijo `!cmd`:
+Dentro del agente puedes lanzar órdenes con el prefijo `!cmd`:
 
 ```text
 !cmd whoami
@@ -119,56 +101,62 @@ Dentro del agente, puedes invocar comandos con el prefijo `!cmd`:
 !cmd uname -a
 ```
 
-Si una orden coincide con patrones peligrosos como `rm -rf /`, `mkfs`, `dd if=/dev/zero`, `curl ... | bash`, etc., el sistema la bloquea o la requiere de aprobación según el modo activo.
+Si el comando coincide con patrones sospechosos como:
+
+- `rm -rf /`
+- `mkfs`
+- `dd if=/dev/zero`
+- `curl ... | bash`
+- `wget ... | bash`
+
+el agente lo bloquea o exige confirmación según el modo activo.
 
 ## Auditoría
 
-El agente registra eventos en formato JSONL dentro de `logs/audit.jsonl`.
+El sistema registra eventos en formato JSONL en la carpeta `logs/`:
 
-Los eventos pueden incluir:
-
-- inicio de sesión del agente,
+- inicio del agente,
 - comandos ejecutados,
 - comandos bloqueados,
 - respuestas del modelo,
-- errores y fallos de ejecución.
+- errores y casos de seguridad.
 
 ## Limitaciones y advertencias
 
-Este proyecto es una referencia técnica, no una solución de seguridad "lista para producción" sin revisión. Debe considerarse como prototipo con fines de validación y aprendizaje.
+Este proyecto es una referencia técnica y un prototipo de validación, no una solución de seguridad lista para producción sin revisión.
 
-Entre sus principales limitaciones se incluyen:
+Entre sus principales limitaciones:
 
-- Dependencia del soporte del kernel Linux.
-- Dependencia de la configuración correcta de `bubblewrap`.
-- Detección heurística de patrones no exhaustiva.
-- Necesidad de permisos suficientes para crear namespaces.
-- Riesgo residual si el host está mal configurado o los controles de seguridad no están bien definidos.
+- La protección depende del soporte del kernel Linux.
+- `bwrap` no garantiza seguridad absoluta si el host está mal configurado.
+- Las expresiones regulares de detección no cubren todas las ejecuciones maliciosas.
+- Se requiere permiso suficiente para crear namespaces.
+- El entorno debe revisarse antes de ser usado en un sistema productivo.
 
 ## Seguridad
 
-El modelo puede generar respuestas o comandos muy complejos; por ello, la capa de ejecución debe tratarse como una frontera de seguridad. El proyecto pretende reducir riesgo, pero no reemplaza un diseño serio de seguridad del sistema operativo ni una revisión de profesionales de seguridad para despliegues reales.
+La ejecución del modelo no debe tratarse como un entorno de confianza total. El bloque de ejecución debe considerarse una frontera de seguridad. El proyecto intenta reducir riesgo, pero no sustituye una política seria de seguridad del sistema operativo ni una revisión de expertos.
 
 ## Resumen ejecutivo
 
-Anti-Gravity Uncensored busca un equilibrio técnico muy concreto:
+Anti-Gravity Uncensored busca un balance técnico concreto:
 
-- libertad funcional del modelo en el plano intelectual,
+- libertad funcional del modelo en la capa de razonamiento,
 - control estricto del entorno operativo,
-- trazabilidad de la actividad,
-- aislamiento de ejecución a nivel de kernel.
+- trazabilidad de acciones mediante auditoría,
+- aislamiento real de ejecución a nivel de kernel.
 
 ## Licencia
 
-Este repositorio se entrega como referencia técnica para investigación, validación y desarrollo interno. Antes de utilizarlo en producción, conviene revisar la licencia y adaptarla a la política del entorno donde se desplegará.
+Este repositorio se entrega como referencia técnica para investigación, pruebas y validación interna. Ajusta la licencia antes de desplegarlo en producción o en entornos de terceros.
 
 ## Notas finales
 
-Este repositorio está pensado como una base de trabajo para demostrar cómo combinar:
+La idea de este proyecto es demostrar cómo combinar:
 
 - un modelo local sin alineación explícita,
-- un LLM con historial de conversación,
-- auditoría de eventos,
+- un historial de conversación,
+- una política de seguridad en ejecución,
 - y aislamiento operativo con `bubblewrap`.
 
-La idea no es reemplazar prácticas de seguridad, sino exponer una implementación concreta para pruebas y análisis técnico.
+El objetivo no es reemplazar prácticas de seguridad, sino exponer un diseño técnico concreto y discutible para análisis y desarrollo.
