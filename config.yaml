@@ -1,0 +1,23 @@
+ollama:
+  host: "http://localhost:11434"
+  model: "dolphin-llama3.1:8b"
+
+runtime:
+  mode: "sandbox"
+  timeout: 120
+  workspace: "/workspace"
+
+security:
+  dangerous_patterns:
+    - "rm\s+-rf\s+/"
+    - "mkfs\s+"
+    - "dd\s+if=/dev/zero"
+    - "shutdown\s+-h\s+now"
+    - "reboot"
+    - ":\s*\(\)\s*\{\s*:\s*;\s*\}\s*;"
+    - "chmod\s+777\s+/"
+    - "curl\s+.*\|\s*bash"
+    - "wget\s+.*\|\s*bash"
+
+logging:
+  audit_path: "/workspace/logs/audit.jsonl"
